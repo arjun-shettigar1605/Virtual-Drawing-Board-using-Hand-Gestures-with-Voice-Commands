@@ -57,7 +57,7 @@ class VoiceCommandListener:
             self.listen_thread = threading.Thread(target=self._listen_loop)
             self.listen_thread.daemon = True  # Thread will exit when main program exits
             self.listen_thread.start()
-            print(f"Voice command listener started using device index {self.device_index}. Say 'save' or 'clear'.")
+            print(f"Voice command listener started using device index {self.device_index}.")
     
     def stop_listening(self):
         """Stop the voice command listener thread"""
@@ -85,8 +85,8 @@ class VoiceCommandListener:
                         print(f"Detected: {command}")
                         
                         # Check for valid commands
-                        if "save" in command:
-                            self.command_queue.put("save")
+                        if "screenshot" in command:
+                            self.command_queue.put("screenshot")
                         elif "clear" in command:
                             self.command_queue.put("clear")
                         # Add more commands as needed
@@ -275,7 +275,7 @@ try:
             try:
                 command = voice_listener.get_command()
                 if command:
-                    if command == "save":
+                    if command == "screenshot":
                         print("Saving the canvas...")
                         # Save the canvas to a file with timestamp
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -290,7 +290,7 @@ try:
                         canvas[:, :, :] = 255
                         command_display = "Canvas cleared"
                         last_command_time = time.time()
-                    elif command == "thicker":
+                    elif command == "increase":
                         if tool == "Eraser":
                             eraserThickness = min(eraserThickness + thicknessStep*2, maxEraserThickness)
                             command_display = f"Eraser thickness: {eraserThickness}"
@@ -298,7 +298,7 @@ try:
                             brushThickness = min(brushThickness + thicknessStep, maxThickness)
                             command_display = f"Brush thickness: {brushThickness}"
                         last_command_time=time.time()
-                    elif command == "thinner":
+                    elif command == "decrease":
                         if tool == "Eraser":
                             eraserThickness = max(eraserThickness - thicknessStep*2, minThickness)
                             command_display = f"Eraser thickness: {eraserThickness}"
