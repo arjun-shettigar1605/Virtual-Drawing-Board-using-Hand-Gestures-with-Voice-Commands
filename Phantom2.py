@@ -24,7 +24,7 @@ class VoiceCommandListener:
             self.listen_thread = threading.Thread(target=self._listen_loop)
             self.listen_thread.daemon = True  # Thread will exit when main program exits
             self.listen_thread.start()
-            print("Voice command listener started. Say 'save' or 'clear'.")
+            print("Voice command listener started.")
     
     def stop_listening(self):
         """Stop the voice command listener thread"""
@@ -51,8 +51,8 @@ class VoiceCommandListener:
                     print(f"Detected: {command}")
                     
                     # Check for valid commands
-                    if "save" in command:
-                        self.command_queue.put("save")
+                    if "screenshot" in command:
+                        self.command_queue.put("screenshot")
                     elif "clear" in command:
                         self.command_queue.put("clear")
                     # Add more commands as needed
@@ -166,7 +166,7 @@ try:
         # Check for voice commands (non-blocking)
         try:
             command = voice_listener.get_command()
-            if command == "save":
+            if command == "screenshot":
                 print("Saving the canvas...")
                 # Save the canvas to a file with timestamp
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
