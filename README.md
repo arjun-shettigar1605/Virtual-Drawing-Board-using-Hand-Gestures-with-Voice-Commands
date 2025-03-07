@@ -1,64 +1,88 @@
-# Phantom
-A Virtual Board
+# **Virtual Drawing Board Using Hand Gesture Recognition and Voice Command Integration (VisionBoard)**  
+This project is a **Virtual Drawing Board** that enables users to interact with a digital canvas using **hand gestures and voice commands** without requiring physical contact. It combines **Computer Vision** and **Speech Recognition** technologies to create an intuitive, contactless drawing experience.
 
-# Introduction
-Phantom is a virtual board where user can draw their concept or teach others by using hand gestures on air
-so from now on words there is not a need of whiteboards or blackboards
+---
 
-This app is intended to be made as both website form and also as an executable file for windows so the range of users can be increased
+## 🔑 **Project Overview**  
+The Virtual Drawing Board leverages **MediaPipe** for real-time hand gesture recognition and **OpenCV** to process live video feeds from the webcam. The application can track hand landmarks to interpret various drawing actions like sketching, erasing, and selecting tools. Additionally, voice commands using the **SpeechRecognition** module allow users to clear the canvas, save their artwork, and adjust pointer thickness through simple spoken instructions.
 
-# Working
-  Open both index and middle finger and select a tool by moving tip of index finger to the position of the tool on the window and then close middle finger to draw with your index finger
+---
+
+## **Features**  
+- Contactless drawing with hand gestures  
+- Voice commands to perform actions like:
+    - **"Clear"** – Erase the canvas  
+    - **"Save"** – Save the artwork as an image  
+    - **"Increase Thickness"** – Thicker brush  
+    - **"Decrease Thickness"** – Thinner brush  
+- Real-time hand tracking using **MediaPipe**  
+- Adjustable brush thickness with gesture controls  
+- Circle and rectangle shape drawing  
+- Color and tool selection  
+
+---
+
+## 🎯 **Tech Stack Used**  
+- Python  
+- Flask (Backend Framework)  
+- MediaPipe (Hand Gesture Recognition)  
+- OpenCV (Computer Vision)  
+- SpeechRecognition (Voice Command Processing)  
+- HTML/CSS  
+- JavaScript  
+
+---
+
+## 📌 **Folder Structure**  
+```
+Virtual Drawing Board/
+│
+├─ static/        # CSS, JS, and images
+├─ templates/     # HTML files
+├─ Phantom3.py    # Main Flask backend file
+└─ requirements.txt  # Dependencies
+```
+
+---
+
+## **How to Run the Project**  
+1. Clone the repository:  
+```bash
+git clone https://github.com/your_username/Virtual-Drawing-Board.git
+cd Virtual-Drawing-Board
+```
+2. Install dependencies:  
+```bash
+pip install -r requirements.txt
+```
+3. Run the application:  
+```bash
+python Phantom3.py
+```
+4. Visit:  
+```
+http://127.0.0.1:5000/
+```
+
+---
+
+## **Screenshots**  
+![image](https://github.com/user-attachments/assets/206ff101-1544-4be9-97a6-bf662949e43f)
+![image](https://github.com/user-attachments/assets/5c11ea82-9495-416d-9d0b-123cb307a79c)
+![sam3](https://github.com/user-attachments/assets/61d6a0db-cd26-44d4-a347-c09b7b84befb)
+
  
-    For Website 
-     Run app.py
-    For Desktop version
-     Run Phantom.py
 
-#How to run
+---
 
-Phantom comes in 2 versions 
-1.Phantom app (Desktop version)
+## 🎯 **Future Scope**  
+- Multi-hand gesture support  
+- Advanced shape recognition  
+- Multi-user collaboration  
+- Cloud storage integration  
+- Background noise filtering in voice commands  
 
-2.Phantom Website using flask
-
-#Phantom Desktop version
-
-    python Phantom.py
-
-It comes with cool tools , color selection , etc and additionally it also has a whiteboard where your drawing will be automatically pushed to
-
-    Requiremets are
-     1.images folder
-     2.Phantom.py
-
-#Phantom Website version
-
-    python app.py
-
-It also comes with cool tools , color selection , etc but not whiteboard
-
-Here Within the website all necessary details like future scope , workings are specified
-
-    Requiremets are
-     1.static folder
-     2.template folder
-     3.app.py
+---
 
 
-
-
-
-# Requirements
-
-1. Python 3.7 or above
-2. OpenCV
-3. Numpy
-4. flask
-5. Mediapipe (modal provided by google)
-
-# Images
-Required images are BarUp.png (Header part along with logo) , BarSide.png (along with tools) for Phantom.py
-
-For website we need BarUp.png,BarSide.png,hero.jpg,phantomLogo.png
-
+## ⭐ **Feel free to contribute and make this project better!**
