@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Video</title>
-    <link href="{{ url_for('static',filename='images/phantomLogo.png') }}" rel="icon">
+    <link href="{{ url_for('static',filename='images/logo.png') }}" rel="icon">
+    <script>
+        window.onload = function(){
+            const vidElement = document.querySelector('img');
+            vidElement.src = "{{ url_for('video') }}?t=" + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
- <img src="{{ url_for('video') }}"/>
-
+ {#<img src="{{ url_for('video') }}"/>#}
+ <img/>
 </body>
 </html>

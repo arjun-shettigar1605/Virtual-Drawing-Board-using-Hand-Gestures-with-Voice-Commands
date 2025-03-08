@@ -180,6 +180,7 @@ ul li::before {
   padding: 4rem 2rem;
   background-color: var(--primary-purple);
   min-height: 30vh;
+  margin-left: 5rem;
 }
 
 /* Footer */

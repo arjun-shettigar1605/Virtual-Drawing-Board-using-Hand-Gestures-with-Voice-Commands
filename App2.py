@@ -31,10 +31,9 @@ class VoiceCommandListener:
         mics = []
         
         # List all audio devices
-        print("Available microphones:")
         for i in range(p.get_device_count()):
             dev_info = p.get_device_info_by_index(i)
-            # Only include input devices (microphones)
+            # Only include input devices
             if dev_info.get('maxInputChannels') > 0:
                 print(f"Device {i}: {dev_info.get('name')}")
                 mics.append((i, dev_info.get('name')))
@@ -83,7 +82,7 @@ class VoiceCommandListener:
                 try:
                     with self.microphone as source:
                         print("Listening for commands...")
-                        audio = self.recognizer.listen(source, timeout=2, phrase_time_limit=3)
+                        audio = self.recognizer.listen(source, timeout=10, phrase_time_limit=5)
                     
                     try:
                         command = self.recognizer.recognize_google(audio).strip().lower()
@@ -171,26 +170,36 @@ cap.set(10, 150)  # brightness=150%
 #     cv2.destroyAllWindows()
 def generate_frames():
     # Canvas
+    static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
     global canvas
     canvas = np.zeros((720, 1280, 3), np.uint8)
     canvas[:, :, :] = 255
     # Black Canvas
     canvasBlack = np.zeros((720, 1280, 3), np.uint8)
 
-    # header bar image
-    try:
-        overlay = cv2.imread("static/images/BarSide2.png")[0:80, 0:1280]
-        # SideBar image
-        sidebar = cv2.imread("static/images/BarSide2.png")[80:720, 1200:1280]
-    except Exception as e:
-        print(f"Error loading UI images: {e}")
-        # Create default UI elements
-        overlay = np.zeros((80, 1280, 3), np.uint8)
-        overlay[:, :] = (200, 200, 200)  # Gray color
-        
-        sidebar = np.zeros((640, 80, 3), np.uint8)
-        sidebar[:, :] = (200, 200, 200)  # Gray color
+    # # header bar image
+    # overlay = cv2.imread("images/sam3.png")[0:80, 0:1280]
+    overlay_path = os.path.join(static_folder, 'images', 'BarSide2.png')
+    # # SideBar image
+    overplay_img = cv2.imread(overlay_path)
+    # sidebar = cv2.imread("images/sam3.png")[80:720, 1200:1280]
 
+    if overplay_img is None:
+        print(f"Error: Could not load image from {overlay_path}")
+        overlay = np.zeros((80, 1280, 3), np.uint8)
+    else:
+        overlay = overplay_img[0:80, 0:1280]    
+        
+    sidebar_path = os.path.join(static_folder, 'images', 'BarSide2.png')
+    sidebar_img = cv2.imread(sidebar_path)
+    
+    if sidebar_img is None:
+        print(f"ERROR: Could not load image from {sidebar_path}")
+        # Provide a fallback
+        sidebar = np.zeros((640, 80, 3), np.uint8)
+    else:
+        sidebar = sidebar_img[80:720, 1200:1280]
+    
     # Mediapipe hand object
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands()  # hands=mp_hands.Hands(min_detection_confidence=0.5,min_tracking_confidence=0.5)
@@ -529,26 +538,26 @@ def generate_frames():
             img[80:720, 1200:1280] = sidebar
 
             # Display current tool and color info
-            cv2.putText(img, f"Tool: {selectedTool}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-            cv2.putText(img, f"Color: {selectedColor}", (20, 65), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+            cv2.putText(img, f"Tool: {selectedTool}", (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+            cv2.putText(img, f"Color: {selectedColor}", (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
             if tool == "Eraser":
-                cv2.putText(img, f"Thickness: {eraserThickness}", (20,70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
+                cv2.putText(img, f"Thickness: {eraserThickness}", (20,125), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
             else:
-                cv2.putText(img, f"Thickness: {brushThickness}", (20,70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
+                cv2.putText(img, f"Thickness: {brushThickness}", (20,125), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
                 
                 
             # Display voice command feedback
             if time.time() - last_command_time < command_display_duration and command_display:
-                cv2.putText(img, command_display, (480, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+                cv2.putText(img, command_display, (480, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
 
             # Display voice status
             if voice_listener and voice_listener.running:
-                cv2.putText(img, "Voice: ON", (1150, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+                cv2.putText(img, "Voice: ON", (1150, 620), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
             else:
-                cv2.putText(img, "Voice: OFF", (1150, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+                cv2.putText(img, "Voice: OFF", (1150, 620), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
-            cv2.putText(img, "Thickness: Thumb-Index pinch to adjust", (800, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+            cv2.putText(img, "Thickness: Thumb-Index pinch to adjust", (800, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
             # showing frame
             
             ret, buffer = cv2.imencode('.jpg', img)
@@ -572,9 +581,14 @@ def board():
     return render_template("video.html")
 
 @app.route("/video")
-
 def video():
-    return Response(generate_frames(),mimetype="multipart/x-mixed-replace; boundary=frame")
+    # return Response(generate_frames(),mimetype="multipart/x-mixed-replace; boundary=frame")
+    response = Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+    
 if __name__== "__main__":
     print("Initializing voice command system...")
     app.config['mics'] = VoiceCommandListener.list_microphones()
@@ -583,8 +597,8 @@ if __name__== "__main__":
     # Validate if index 2 exists
     valid = any(mic[0] == 2 for mic in app.config['mics'])
     if not valid:
-        print(f"Microphone index 2 not found. Available devices: {app.config['mics']}")
-        selected_mic = None  # Fallback to default
+        print(f"Microphone index 2 not found. Changing to index 1")
+        selected_mic = 1  # Fallback to default
     app.config['selected_mic'] = selected_mic
     app.run(host='0.0.0.0', port=5000, debug=False)
     
