@@ -12,9 +12,9 @@ The Virtual Drawing Board leverages **MediaPipe** for real-time hand gesture rec
 - Contactless drawing with hand gestures  
 - Voice commands to perform actions like:
     - **"Clear"** – Erase the canvas  
-    - **"Save"** – Save the artwork as an image  
-    - **"Increase Thickness"** – Thicker brush  
-    - **"Decrease Thickness"** – Thinner brush  
+    - **"Screenshot"** – Save the artwork as an image 
+    - **"Increase"** – Thicker brush  
+    - **"Decrease"** – Thinner brush  
 - Real-time hand tracking using **MediaPipe**  
 - Adjustable brush thickness with gesture controls  
 - Circle and rectangle shape drawing  
@@ -37,9 +37,9 @@ The Virtual Drawing Board leverages **MediaPipe** for real-time hand gesture rec
 ```
 Virtual Drawing Board/
 │
-├─ static/        # CSS, JS, and images
-├─ templates/     # HTML files
-├─ Phantom3.py    # Main Flask backend file
+├─ static/           # CSS, JS, and images
+├─ templates/        # HTML files
+├─ App2.py           # Main Flask backend file
 └─ requirements.txt  # Dependencies
 ```
 
@@ -48,8 +48,8 @@ Virtual Drawing Board/
 ## **How to Run the Project**  
 1. Clone the repository:  
 ```bash
-git clone https://github.com/your_username/Virtual-Drawing-Board.git
-cd Virtual-Drawing-Board
+git clone https://github.com/username/Virtual-Drawing-Board-using-Hand-Gestures-with-Voice-Commands.git
+cd Virtual-Drawing-Board-using-Hand-Gestures-with-Voice-Commands
 ```
 2. Install dependencies:  
 ```bash
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 ```
 3. Run the application:  
 ```bash
-python Phantom3.py
+python App2.py
 ```
 4. Visit:  
 ```
