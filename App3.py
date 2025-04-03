@@ -212,8 +212,8 @@ def generate_frames():
     maxThickness = 40
     maxEraserThickness = 100
     thicknessStep = 3 #step increase during voice command increase method
-    minDistance = 20
-    maxDistance = 150
+    # minDistance = 20
+    # maxDistance = 150
 
 
 
@@ -690,19 +690,6 @@ def generate_frames():
                 # 5. Drawing Mode==================================================================================
                 if fingerList[1] and fingerList[2] == 0:
                     current_thickness = brushThickness
-                    if fingerList[0] == 1 and len(landMark) > 8:
-                        thumb_index_distance = calculate_distance((xthumb, ythumb), (xi, yi))
-                        if tool == "Eraser":
-                            mapped_thickness = max(minThickness * 2, min(maxEraserThickness, minThickness * 2 + (maxEraserThickness - minThickness * 2) * ((thumb_index_distance - minDistance) / (maxDistance - minDistance))))
-                            eraserThickness = int(mapped_thickness)
-                        else:
-                            mapped_thickness = max(minThickness, min(maxThickness, minThickness + (maxThickness - minThickness) * ((thumb_index_distance - minDistance) / (maxDistance - minDistance))))
-                            brushThickness = int(mapped_thickness)
-                    
-                        cv2.putText(img, f"Thickness: {int(mapped_thickness)}", (xi + 20, yi), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-                            
-                        # Draw a line between thumb and index to visualize the measurement
-                        cv2.line(img, (xthumb, ythumb), (xi, yi), (0, 255, 0), 2)
                         
                     cv2.circle(img, (xi, yi), 15, drawColor, -1)
 
@@ -920,8 +907,8 @@ def generate_frames():
             else:
                 cv2.putText(img, "Voice: OFF", (1150, 620), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
-            cv2.putText(img, "Thickness: Thumb-Index pinch to adjust", (800, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-            # showing frame
+            # cv2.putText(img, "Thickness: Thumb-Index pinch to adjust", (800, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+            # # showing frame
             
             ret, buffer = cv2.imencode('.jpg', img)
             frame = buffer.tobytes()
