@@ -1,6 +1,4 @@
-# Added More shapes: Cube, Cubiod, Triangle, Square
-# Removed Brush thickness control through hand gestures
-# Added Voice commands for Shapes
+# Improved stroke stabilzation and reduced jitter
 
 #importing necessary libraries
 from flask import Flask, render_template, Response
@@ -14,6 +12,7 @@ import speech_recognition as sr
 import time
 import pyaudio
 from datetime import datetime
+from collections import deque
 
 app = Flask(__name__)
 app.config['selected_mic'] = None
@@ -126,6 +125,14 @@ class VoiceCommandListener:
                             self.command_queue.put("eraser")
                         elif "pencil" in command or "cancel" in command:
                             self.command_queue.put("draw")
+                        elif "thank" in command:
+                            self.command_queue.put("thank")
+                        elif "thickness" in command:
+                            try:
+                                value = int(command.split("thickness")[1].strip())
+                                self.command_queue.put(f"thickness {value}")
+                            except (IndexError, ValueError):
+                                print("Invalid thickness command format")
 
                         for shape_phrase, shape_tool in self.shape_commands.items():
                             if shape_phrase in command:
@@ -179,6 +186,8 @@ def generate_frames():
     # Black Canvas
     canvasBlack = np.zeros((720, 1280, 3), np.uint8)
     
+    position_buffer = deque(maxlen=5)  # Stores last 5 finger positions
+    stroke_buffer = deque(maxlen=3)    # For stroke stabilization
 
     # # header bar image
     # overlay = cv2.imread("images/sam3.png")[0:80, 0:1280]
@@ -189,9 +198,9 @@ def generate_frames():
 
     if overplay_img is None:
         print(f"Error: Could not load image from {overlay_path}")
-        overlay = np.zeros((80, 1280, 3), np.uint8)
+        overlay = np.zeros((105, 1280, 3), np.uint8)
     else:
-        overlay = overplay_img[0:80, 0:1280]    
+        overlay = overplay_img[0:105, 0:1280]    
         
     sidebar_path = os.path.join(static_folder, 'images', 'BarSide1.png')
     sidebar_img = cv2.imread(sidebar_path)
@@ -199,9 +208,9 @@ def generate_frames():
     if sidebar_img is None:
         print(f"ERROR: Could not load image from {sidebar_path}")
         # Provide a fallback
-        sidebar = np.zeros((640, 80, 3), np.uint8)
+        sidebar = np.zeros((615, 80, 3), np.uint8)
     else:
-        sidebar = sidebar_img[80:720, 1200:1280]
+        sidebar = sidebar_img[105:720, 1180:1280]    
     
     # Mediapipe hand object
     mp_hands = mp.solutions.hands
@@ -356,7 +365,27 @@ def generate_frames():
                             selectedTool = 'Draw'
                             command_display = "Draw selected"
                             last_command_time = time.time()
+                        
+                        elif command == "thank":
+                            command_display = "You're Welcome!"
+                            last_command_time = time.time()
                             
+                        elif command.startswith("thickness"):
+                            _, value_str = command.split()
+                            try: 
+                                value = int(value_str)
+                                if tool == "Eraser":
+                                    newThickness = np.clip(value, minThickness, maxEraserThickness)
+                                    eraserThickness = newThickness
+                                else:
+                                    newthickness = np.clip(value, minThickness, maxThickness)
+                                    brushThickness = newthickness
+                                command_display = f"Eraser thickness changed"
+                                last_command_time = time.time()
+                            except ValueError:
+                                command_display = "Invalid thickness value"
+                                last_command_time = time.time()
+                        
                         elif command.startswith("draw"):
                             shape = command.split(" ")[1]
                             print(f"Processing shape command: draw {shape}")
@@ -430,6 +459,14 @@ def generate_frames():
                     landMark.append([id, x, y])
 
                 xi, yi = landMark[8][1:]  # index fingers position
+                
+                position_buffer.append((xi, yi))
+                if position_buffer:
+                    smoothed_xi = int(np.mean([x for x, y in position_buffer]))
+                    smoothed_yi = int(np.mean([y for x, y in position_buffer]))
+                else:
+                    smoothed_xi, smoothed_yi = xi, yi
+                    
                 xm, ym = landMark[12][1:]  # middle fingers position
                 # print(xm,ym)
 
@@ -440,49 +477,49 @@ def generate_frames():
                 
 
                 if pending_shape_command and len(landMark) >= 9:
-                    xi, yi = landMark[8][1:]
-                    print(f"Executing pending shape command: {pending_shape_command} at ({xi}, {yi})")
+                    smoothed_xi, smoothed_yi = landMark[8][1:]
+                    print(f"Executing pending shape command: {pending_shape_command} at ({smoothed_xi}, {smoothed_yi})")
                     
                     if pending_shape_command == "Rectangle":
                         tool = "Rectangle"
                         selectedTool = 'Rectangle'
                         countRectangle = 0
-                        xstart_rect, ystart_rect = xi, yi
+                        xstart_rect, ystart_rect = smoothed_xi, smoothed_yi
                         command_display = f"Drawing {pending_shape_command}"
                         last_command_time = time.time()
                     elif pending_shape_command == "Circle":
                         tool = "Circle"
                         selectedTool = 'Circle'
                         countCircle = 0
-                        xstart_circle, ystart_circle = xi, yi
+                        xstart_circle, ystart_circle = smoothed_xi, smoothed_yi
                         command_display = f"Drawing {pending_shape_command}"
                         last_command_time = time.time()
                     elif pending_shape_command == "Square":
                         tool = "Square"
                         selectedTool = 'Square'
                         countSquare = 0
-                        xstart_square, ystart_square = xi, yi
+                        xstart_square, ystart_square = smoothed_xi, smoothed_yi
                         command_display = f"Drawing {pending_shape_command}"
                         last_command_time = time.time()
                     elif pending_shape_command == "Triangle":
                         tool = "Triangle"
                         selectedTool = 'Triangle'
                         countTriangle = 0
-                        xstart_triangle, ystart_triangle = xi, yi
+                        xstart_triangle, ystart_triangle = smoothed_xi, smoothed_yi
                         command_display = f"Drawing {pending_shape_command}"
                         last_command_time = time.time()
                     elif pending_shape_command == "Cube":
                         tool = "Cube"
                         selectedTool = 'Cube'
                         countCube = 0
-                        xstart_cube, ystart_cube = xi, yi
+                        xstart_cube, ystart_cube = smoothed_xi, smoothed_yi
                         command_display = f"Drawing {pending_shape_command}"
                         last_command_time = time.time()
                     elif pending_shape_command == "Cuboid":
                         tool = "Cuboid"
                         selectedTool = 'Cuboid'
                         countCuboid = 0
-                        xstart_cuboid, ystart_cuboid = xi, yi
+                        xstart_cuboid, ystart_cuboid = smoothed_xi, smoothed_yi
                         command_display = f"Drawing {pending_shape_command}"
                         last_command_time = time.time()
                     
@@ -652,7 +689,7 @@ def generate_frames():
                     # to make discontinuity after selection
                     xp, yp = 0, 0
 
-                    cv2.rectangle(img, (xi - 10, yi - 15), (xm + 10, ym + 20), drawColor, -1)
+                    cv2.rectangle(img, (smoothed_xi - 10, smoothed_yi - 15), (xm + 10, ym + 20), drawColor, -1)
 
                     # check if finger on header portion   check later y 125 not 80
                     if yi < 105:
@@ -752,18 +789,18 @@ def generate_frames():
                 if fingerList[1] and fingerList[2] == 0:
                     current_thickness = brushThickness
                         
-                    cv2.circle(img, (xi, yi), 15, drawColor, -1)
+                    cv2.circle(img, (smoothed_xi, smoothed_yi), 15, drawColor, -1)
 
                     if tool == "Eraser":
                         # when frame start dont make a line from 0,0 so draw a line from xi,yi to xi,yi ie a point
                         if xp == 0 and yp == 0:
-                            xp, yp = xi, yi
+                            xp, yp = smoothed_xi, smoothed_yi
                         
-                        cv2.line(img, (xp, yp), (xi, yi), drawColor, eraserThickness)
-                        cv2.line(canvas, (xp, yp), (xi, yi), (255, 255, 255), eraserThickness)
-                        cv2.line(canvasBlack, (xp, yp), (xi, yi), drawColor, eraserThickness)
+                        cv2.line(img, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, eraserThickness)
+                        cv2.line(canvas, (xp, yp), (smoothed_xi, smoothed_yi), (255, 255, 255), eraserThickness)
+                        cv2.line(canvasBlack, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, eraserThickness)
 
-                        xp, yp = xi, yi
+                        xp, yp = smoothed_xi, smoothed_yi
 
                 
 
@@ -771,67 +808,67 @@ def generate_frames():
                     if tool == "Draw":
                         # when frame start dont make a line from 0,0 so draw a line from xi,yi to xi,yi ie a point
                         if xp == 0 and yp == 0:
-                            xp, yp = xi, yi
+                            xp, yp = smoothed_xi, smoothed_yi
 
                         # it is to automatically make eraser back to normal size
                         if drawColor != (0, 0, 0):
-                            cv2.line(img, (xp, yp), (xi, yi), drawColor, brushThickness)
-                            cv2.line(canvas, (xp, yp), (xi, yi), drawColor, brushThickness)
-                            cv2.line(canvasBlack, (xp, yp), (xi, yi), drawColor, brushThickness)
+                            cv2.line(img, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, brushThickness)
+                            cv2.line(canvas, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, brushThickness)
+                            cv2.line(canvasBlack, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, brushThickness)
                         else:
-                            cv2.line(img, (xp, yp), (xi, yi), drawColor, eraserThickness)
-                            cv2.line(canvas, (xp, yp), (xi, yi), (255, 255, 255), eraserThickness)
-                            cv2.line(canvasBlack, (xp, yp), (xi, yi), drawColor, eraserThickness)
+                            cv2.line(img, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, eraserThickness)
+                            cv2.line(canvas, (xp, yp), (smoothed_xi, smoothed_yi), (255, 255, 255), eraserThickness)
+                            cv2.line(canvasBlack, (xp, yp), (smoothed_xi, smoothed_yi), drawColor, eraserThickness)
                         # update xp and yp
-                        xp, yp = xi, yi
+                        xp, yp = smoothed_xi, smoothed_yi
                         
                     # Circle
                     elif tool == "Circle":
                         if countCircle == 1:
-                            xstart_circle, ystart_circle = xi, yi
+                            xstart_circle, ystart_circle = smoothed_xi, smoothed_yi
                             countCircle = 0
-                        cv2.circle(img, (xstart_circle, ystart_circle), int(((xstart_circle - xi) ** 2 + (ystart_circle - yi) ** 2) ** 0.5), drawColor, brushThickness)
-                        xlast_circle, ylast_circle = xi, yi
+                        cv2.circle(img, (xstart_circle, ystart_circle), int(((xstart_circle - smoothed_xi) ** 2 + (ystart_circle - smoothed_yi) ** 2) ** 0.5), drawColor, brushThickness)
+                        xlast_circle, ylast_circle = smoothed_xi, smoothed_yi
                     # Rectanlge 
                     elif tool == "Rectangle":
                         if countRectangle == 1:
-                            xstart_rect, ystart_rect = xi, yi
+                            xstart_rect, ystart_rect = smoothed_xi, smoothed_yi
                             countRectangle = 0
-                        cv2.rectangle(img, (xstart_rect, ystart_rect), (xi, yi), drawColor, brushThickness)
-                        xlast_rect, ylast_rect = xi, yi
+                        cv2.rectangle(img, (xstart_rect, ystart_rect), (smoothed_xi, smoothed_yi), drawColor, brushThickness)
+                        xlast_rect, ylast_rect = smoothed_xi, smoothed_yi
                         
                     # For Triangle
                     elif tool == "Triangle":
                         if countTriangle == 1:
-                            xstart_triangle, ystart_triangle = xi, yi
+                            xstart_triangle, ystart_triangle = smoothed_xi, smoothed_yi
                             countTriangle = 0
                         # Calculate third point based on current position
-                        height = int(((xstart_triangle - xi)**2 + (ystart_triangle - yi)**2)**0.5)
-                        angle = np.arctan2(yi - ystart_triangle, xi - xstart_triangle)
+                        height = int(((xstart_triangle - smoothed_xi)**2 + (ystart_triangle - smoothed_yi)**2)**0.5)
+                        angle = np.arctan2(smoothed_yi - ystart_triangle, smoothed_xi - xstart_triangle)
                         xthird = int(xstart_triangle + height * np.cos(angle + np.pi/2))
                         ythird = int(ystart_triangle + height * np.sin(angle + np.pi/2))
                         
                         # Preview triangle
-                        triangle_pts = np.array([[xstart_triangle, ystart_triangle], [xthird, ythird], [xi, yi]], np.int32)
+                        triangle_pts = np.array([[xstart_triangle, ystart_triangle], [xthird, ythird], [smoothed_xi, smoothed_yi]], np.int32)
                         triangle_pts = triangle_pts.reshape((-1, 1, 2))
                         cv2.polylines(img, [triangle_pts], True, drawColor, brushThickness)
                         
                         # Update last positions
                         xmid_triangle, ymid_triangle = xthird, ythird
-                        xlast_triangle, ylast_triangle = xi, yi
+                        xlast_triangle, ylast_triangle = smoothed_xi, smoothed_yi
 
                     # For Square
                     elif tool == "Square":
                         if countSquare == 1:
-                            xstart_square, ystart_square = xi, yi
+                            xstart_square, ystart_square = smoothed_xi, smoothed_yi
                             countSquare = 0
                         
                         # Calculate side length based on diagonal distance
-                        side_length = max(abs(xi - xstart_square), abs(yi - ystart_square))
+                        side_length = max(abs(smoothed_xi - xstart_square), abs(smoothed_yi - ystart_square))
                         
                         # Determine the end coordinates while maintaining square proportions
-                        x_end = xstart_square + side_length if xi > xstart_square else xstart_square - side_length
-                        y_end = ystart_square + side_length if yi > ystart_square else ystart_square - side_length
+                        x_end = xstart_square + side_length if smoothed_xi > xstart_square else xstart_square - side_length
+                        y_end = ystart_square + side_length if smoothed_yi > ystart_square else ystart_square - side_length
                         
                         # Draw preview square
                         cv2.rectangle(img, (xstart_square, ystart_square), (x_end, y_end), drawColor, brushThickness)
@@ -840,11 +877,11 @@ def generate_frames():
                     # For Cube
                     elif tool == "Cube":
                         if countCube == 1:
-                            xstart_cube, ystart_cube = xi, yi
+                            xstart_cube, ystart_cube = smoothed_xi, smoothed_yi
                             countCube = 0
                         
                         # Calculate dimension based on distance
-                        dim = abs(xi - xstart_cube)
+                        dim = abs(smoothed_xi - xstart_cube)
                         
                         # Front face vertices
                         front_top_left = (xstart_cube, ystart_cube)
@@ -877,23 +914,23 @@ def generate_frames():
                         cv2.line(img, front_bottom_right, back_bottom_right, drawColor, brushThickness)
                         cv2.line(img, front_bottom_left, back_bottom_left, drawColor, brushThickness)
                         
-                        xlast_cube, ylast_cube = xi, yi
+                        xlast_cube, ylast_cube = smoothed_xi, smoothed_yi
                         cube_dim = dim
 
                     # For Cuboid
                     elif tool == "Cuboid":
                         if countCuboid == 1:
-                            xstart_cuboid, ystart_cuboid = xi, yi
+                            xstart_cuboid, ystart_cuboid = smoothed_xi, smoothed_yi
                             countCuboid = 0
                         
                         # Calculate dimensions
-                        width = abs(xi - xstart_cuboid)
-                        height = abs(yi - ystart_cuboid)
+                        width = abs(smoothed_xi - xstart_cuboid)
+                        height = abs(smoothed_yi - ystart_cuboid)
                         depth = min(width, height) // 2  # Depth is proportional to smaller dimension
                         
                         # Determine direction
-                        x_direction = 1 if xi > xstart_cuboid else -1
-                        y_direction = 1 if yi > ystart_cuboid else -1
+                        x_direction = 1 if smoothed_xi > xstart_cuboid else -1
+                        y_direction = 1 if smoothed_yi > ystart_cuboid else -1
                         
                         # Front face vertices
                         front_top_left = (xstart_cuboid, ystart_cuboid)
@@ -926,7 +963,7 @@ def generate_frames():
                         cv2.line(img, front_bottom_right, back_bottom_right, drawColor, brushThickness)
                         cv2.line(img, front_bottom_left, back_bottom_left, drawColor, brushThickness)
                         
-                        xlast_cuboid, ylast_cuboid = xi, yi
+                        xlast_cuboid, ylast_cuboid = smoothed_xi, smoothed_yi
                     
 
             # 6 . Adding canvas and real fram
@@ -940,22 +977,22 @@ def generate_frames():
             # img = cv2.addWeighted(img, 0.5, canvas, 0.5, 0)
 
             #overlay header , sidebar to webcam
-            img[0:80, 0:1280] = overlay
-            img[80:720, 1200:1280] = sidebar
+            img[0:105, 0:1280] = overlay
+            img[105:720, 1180:1280] = sidebar
 
             # Display current tool and color info
-            cv2.putText(img, f"Tool: {selectedTool}", (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-            cv2.putText(img, f"Color: {selectedColor}", (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+            cv2.putText(img, f"Tool: {selectedTool}", (20, 114), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+            cv2.putText(img, f"Color: {selectedColor}", (20, 134), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
             if tool == "Eraser":
-                cv2.putText(img, f"Thickness: {eraserThickness}", (20,125), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
+                cv2.putText(img, f"Thickness: {eraserThickness}", (20,154), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
             else:
-                cv2.putText(img, f"Thickness: {brushThickness}", (20,125), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
+                cv2.putText(img, f"Thickness: {brushThickness}", (20,154), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
                 
                 
             # Display voice command feedback
             if time.time() - last_command_time < command_display_duration and command_display:
-                cv2.putText(img, command_display, (480, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+                cv2.putText(img, command_display, (480, 114), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
 
             # Display voice status
             if voice_listener and voice_listener.running:

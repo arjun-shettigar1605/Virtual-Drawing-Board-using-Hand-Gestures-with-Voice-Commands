@@ -11,13 +11,19 @@ The Virtual Drawing Board leverages **MediaPipe** for real-time hand gesture rec
 ## **Features**  
 - Contactless drawing with hand gestures  
 - Voice commands to perform actions like:
-    - **"Clear"** – Erase the canvas  
+    - **"Canvas Clear"** – Erase the canvas  
     - **"Screenshot"** – Save the artwork as an image 
     - **"Increase"** – Thicker brush  
-    - **"Decrease"** – Thinner brush  
-- Real-time hand tracking using **MediaPipe**  
-- Adjustable brush thickness with gesture controls  
-- Circle and rectangle shape drawing  
+    - **"Decrease"** – Thinner brush
+    - **"Thickness 'num_val'"** - Sets thickness to num_val directly
+    - **"Circle"** - Draws Circle
+    - **"Rectangle"** - Draws Rectangle
+    - **"Square"** - Draws Square
+    - **"Triangle"** - Draws Triangle
+    - **"Cube"** - Draws Cube
+    - **"Cubiod"** - Draws Cubiod
+- Real-time hand tracking using **MediaPipe**    
+- Shape drawing using Hand Gestures
 - Color and tool selection  
 
 ---
@@ -39,7 +45,7 @@ Virtual Drawing Board/
 │
 ├─ static/           # CSS, JS, and images
 ├─ templates/        # HTML files
-├─ App2.py           # Main Flask backend file
+├─ App5.py           # Main Flask backend file
 └─ requirements.txt  # Dependencies
 ```
 
